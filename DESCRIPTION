@@ -6,7 +6,7 @@ Authors@R: person(
     role = c("aut", "cre"))
 Description: This package implement a mutex and other structures to
     synchronize processes. It is useful in the context of 'parallel'
-    and single-computer 'SNOW'-style clusters of independent
+    and single-computer 'SNOW'-style clusters of forked or independent
     processes.
 Depends: R (>= 3.4.0)
 Imports: methods
