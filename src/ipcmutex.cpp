@@ -35,8 +35,6 @@ extern "C" {
         if (!test)
             Rf_error("'ext' must be an external pointer");
         named_mutex *mtx = (named_mutex *) R_ExternalPtrAddr(ext);
-        if (mtx == NULL)
-            Rf_error("'ext' contanied a NULL external pointer");
         return mtx;
     }
 
@@ -75,7 +73,10 @@ extern "C" {
     SEXP ipcmutex_unlock(SEXP ext)
     {
         named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
+        if (mtx == NULL)
+            Rf_error("lock already released");
         mtx->unlock();
+        R_ClearExternalPtr(ext);
         return Rf_ScalarLogical(TRUE);
     }
 
