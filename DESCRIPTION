@@ -8,6 +8,7 @@ Description: This package implement a mutex and other structures to
     synchronize processes. It is useful in the context of 'SNOW'-style
     clusters of independent processes.
 Depends: R (>= 3.4.0)
+Imports: methods
 SystemRequirements: C++11
 LinkingTo: BH
 License: Artistic-2.0

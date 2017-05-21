@@ -33,9 +33,9 @@ extern "C" {
         bool test = (EXTPTRSXP == TYPEOF(ext)) &&
             (IPCMUTEX_TAG == R_ExternalPtrTag(ext));
         if (!test)
-            Rf_error("'ext' must be an external pointer");
-        named_mutex *mtx = (named_mutex *) R_ExternalPtrAddr(ext);
-        return mtx;
+            Rf_error("'ext' is not an IPCMutex external pointer");
+
+        return (named_mutex *) R_ExternalPtrAddr(ext);
     }
 
     void ipcmutex_externalptr_finalize(SEXP ext)
@@ -47,7 +47,7 @@ extern "C" {
         mtx->unlock();
 
         delete mtx;
-        R_ClearExternalPtr(ext);
+        R_SetExternalPtrAddr(ext, NULL);
     }
 
     // API implementation
@@ -76,8 +76,15 @@ extern "C" {
         if (mtx == NULL)
             Rf_error("lock already released");
         mtx->unlock();
-        R_ClearExternalPtr(ext);
-        return Rf_ScalarLogical(TRUE);
+
+        R_SetExternalPtrAddr(ext, NULL);
+        return ext;
+    }
+
+    SEXP ipcmutex_locked(SEXP ext)
+    {
+        named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
+        return Rf_ScalarLogical(NULL != mtx);
     }
 
     static const R_CallMethodDef callMethods[] = {
@@ -85,6 +92,7 @@ extern "C" {
         {".ipcmutex_lock", (DL_FUNC) & ipcmutex_lock, 1},
         {".ipcmutex_unlock", (DL_FUNC) & ipcmutex_unlock, 1},
         {".ipcmutex_trylock", (DL_FUNC) & ipcmutex_trylock, 1},
+        {".ipcmutex_locked", (DL_FUNC) & ipcmutex_locked, 1},
         {NULL, NULL, 0}
     };
 

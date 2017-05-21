@@ -1,5 +1,7 @@
 useDynLib(IPCMutex, .registration=TRUE)
 
+import(methods)
 export(lock)
 export(trylock)
 export(unlock)
+export(.SHM_MUTEX_ID)
