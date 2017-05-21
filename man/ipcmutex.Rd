@@ -23,8 +23,7 @@ locked(mutex)
 \arguments{
 \item{id}{character(1) identifying the lock to be obtained.}
 
-\item{mutex}{An instance of class \code{Mutex} pointing to an open
-lock.}
+\item{mutex}{An instance of class \code{Mutex}.}
 
 \item{object}{An instance of class \code{Mutex}.}
 }

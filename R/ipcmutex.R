@@ -28,8 +28,7 @@ trylock <- function(id = .SHM_MUTEX_ID) {
 
 #' @rdname ipcmutex
 #'
-#' @param mutex An instance of class \code{Mutex} pointing to an open
-#'     lock.
+#' @param mutex An instance of class \code{Mutex}.
 #'
 #' @return \code{unlock()} returns a \code{Mutex-class} instance with
 #'
@@ -55,6 +54,7 @@ unlock <- function(mutex) {
 #'
 #' @return \code{locked()} returns TRUE when \code{mutex} is locked,
 #'     and FALSE otherwise.
+#'
 #' @export
 locked <- function(mutex)
     .locked(mutex)
