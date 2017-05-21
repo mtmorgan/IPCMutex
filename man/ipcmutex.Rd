@@ -46,3 +46,21 @@ On success, \code{trylock()} returns a \code{Mutex-class}
 \description{
 Inter-process locks
 }
+\examples{
+mtx <- lock()
+mtx
+locked(mtx)
+(mtx1 <- trylock())
+unlock(mtx)
+locked(mtx)
+
+(mtx <- trylock())
+unlock(mtx)
+
+tryCatch(unlock(mtx), error = conditionMessage)
+
+lock()
+gc(); gc()
+mtx <- lock()
+unlock(mtx)
+}

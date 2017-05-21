@@ -6,6 +6,23 @@
 #'
 #' @return \code{lock()} returns a \code{Mutex-class} instance.
 #'
+#' @examples
+#' mtx <- lock()
+#' mtx
+#' locked(mtx)
+#' (mtx1 <- trylock())
+#' unlock(mtx)
+#' locked(mtx)
+#'
+#' (mtx <- trylock())
+#' unlock(mtx)
+#'
+#' tryCatch(unlock(mtx), error = conditionMessage)
+#'
+#' lock()
+#' gc(); gc()
+#' mtx <- lock()
+#' unlock(mtx)
 #' @export
 lock <- function(id = .SHM_MUTEX_ID) {
     ext <- .Call(.ipcmutex_lock, id)
