@@ -40,6 +40,7 @@
 #' unlock(mtx1)
 #' unlock(mtx2)
 #' unlock(mtx3)
+#'
 #' @export
 lock <- function(id = .SHM_MUTEX_ID) {
     ext <- .Call(.ipcmutex_lock, id)
@@ -102,7 +103,7 @@ setMethod(show, "Mutex", function(object) {
     cat(
         "class: ", class(object), "\n",
         "id: ", .id(object), "\n",
-        "locked: ", .locked(object), "\n",
+        "locked(): ", locked(object), "\n",
         sep=""
     )
 })
