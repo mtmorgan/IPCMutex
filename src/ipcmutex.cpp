@@ -88,7 +88,6 @@ extern "C" {
     }
 
     static const R_CallMethodDef callMethods[] = {
-        /* zip_compression.c */
         {".ipcmutex_lock", (DL_FUNC) & ipcmutex_lock, 1},
         {".ipcmutex_unlock", (DL_FUNC) & ipcmutex_unlock, 1},
         {".ipcmutex_trylock", (DL_FUNC) & ipcmutex_trylock, 1},
