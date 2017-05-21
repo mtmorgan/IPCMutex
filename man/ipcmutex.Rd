@@ -57,10 +57,27 @@ locked(mtx)
 (mtx <- trylock())
 unlock(mtx)
 
+## can't unlock() twice
 tryCatch(unlock(mtx), error = conditionMessage)
 
+## reference semantics
+mty <- mtx <- lock()
+locked(mty)
+unlock(mtx)
+locked(mty)
+
+## finalizer triggered on garbage collection
 lock()
 gc(); gc()
 mtx <- lock()
 unlock(mtx)
+
+## named locks
+mtx1 <- lock("mutex 1")
+mtx2 <- lock("mutex 2")
+trylock("mutex 1")
+(mtx3 <- trylock("mutex 3"))
+unlock(mtx1)
+unlock(mtx2)
+unlock(mtx3)
 }
