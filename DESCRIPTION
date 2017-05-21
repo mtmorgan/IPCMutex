@@ -1,0 +1,15 @@
+Package: IPCMutex
+Title: Implements an inter-process mutex using the Boost.Interprocess library
+Version: 0.0.1
+Authors@R: person(
+    "Martin", "Morgan", email = "Martin.Morgan@RoswellPark.org",
+    role = c("aut", "cre"))
+Description: This package implement a mutex and other structures to
+    synchronize processes. It is useful in the context of 'SNOW'-style
+    clusters of independent processes.
+Depends: R (>= 3.4.0)
+SystemRequirements: C++11
+LinkingTo: BH
+License: Artistic-2.0
+LazyData: true
+RoxygenNote: 6.0.1

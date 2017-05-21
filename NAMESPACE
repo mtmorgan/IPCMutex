@@ -1,0 +1,5 @@
+useDynLib(IPCMutex, .registration=TRUE)
+
+export(lock)
+export(trylock)
+export(unlock)
