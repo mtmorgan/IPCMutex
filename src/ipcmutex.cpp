@@ -3,7 +3,6 @@
 using namespace boost::interprocess;
 
 #include <Rinternals.h>
-#include <R_ext/Rdynload.h>
 
 const char *ipcmutex_id(SEXP id)
 {
@@ -48,44 +47,48 @@ void ipcmutex_externalptr_finalize(SEXP ext)
     R_SetExternalPtrAddr(ext, NULL);
 }
 
+// mutex API implementation
+
+SEXP ipcmutex_lock(SEXP id)
+{
+    const char *cid = ipcmutex_id(id);
+    named_mutex *mtx = new named_mutex{open_or_create, cid};
+
+    mtx->lock();
+    return ipcmutex_externalptr(mtx);
+}
+
+SEXP ipcmutex_trylock(SEXP id)
+{
+    const char *cid = ipcmutex_id(id);
+    named_mutex *mtx = new named_mutex{open_or_create, cid};
+
+    bool status = mtx->try_lock();
+    return status ? ipcmutex_externalptr(mtx) : R_NilValue;
+}
+
+SEXP ipcmutex_unlock(SEXP ext)
+{
+    named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
+    if (mtx == NULL)
+        Rf_error("lock already released");
+    mtx->unlock();
+
+    R_SetExternalPtrAddr(ext, NULL);
+    return ext;
+}
+
+SEXP ipcmutex_locked(SEXP ext)
+{
+    named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
+    return Rf_ScalarLogical(NULL != mtx);
+}
+
+// expose to R
+
+#include <R_ext/Rdynload.h>
+
 extern "C" {
-
-    // mutex API implementation
-
-    SEXP ipcmutex_lock(SEXP id)
-    {
-        const char *cid = ipcmutex_id(id);
-        named_mutex *mtx = new named_mutex{open_or_create, cid};
-
-        mtx->lock();
-        return ipcmutex_externalptr(mtx);
-    }
-
-    SEXP ipcmutex_trylock(SEXP id)
-    {
-        const char *cid = ipcmutex_id(id);
-        named_mutex *mtx = new named_mutex{open_or_create, cid};
-
-        bool status = mtx->try_lock();
-        return status ? ipcmutex_externalptr(mtx) : R_NilValue;
-    }
-
-    SEXP ipcmutex_unlock(SEXP ext)
-    {
-        named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
-        if (mtx == NULL)
-            Rf_error("lock already released");
-        mtx->unlock();
-
-        R_SetExternalPtrAddr(ext, NULL);
-        return ext;
-    }
-
-    SEXP ipcmutex_locked(SEXP ext)
-    {
-        named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
-        return Rf_ScalarLogical(NULL != mtx);
-    }
 
     static const R_CallMethodDef callMethods[] = {
         {".ipcmutex_lock", (DL_FUNC) & ipcmutex_lock, 1},
