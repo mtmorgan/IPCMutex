@@ -11,5 +11,5 @@ NULL
 .SHM_MUTEX_ID <- NULL
 
 .onLoad <- function(libname, pkgname) {
-    .SHM_MUTEX_ID <<- paste(pkgname, Sys.getpid(), sep="::")
+    .SHM_MUTEX_ID <<- paste(pkgname, "Mutex", Sys.getpid(), sep="::")
 }
