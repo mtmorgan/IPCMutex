@@ -5,52 +5,52 @@ using namespace boost::interprocess;
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
+const char *ipcmutex_id(SEXP id)
+{
+    bool test = IS_SCALAR(id, STRSXP) && (STRING_ELT(id, 0) != R_NaString);
+    if (!test)
+        Rf_error("'id' must be character(1) and not NA");
+    return CHAR(STRING_ELT(id, 0));
+}
+
+// ExternalPtr
+
+static SEXP IPCMUTEX_TAG = NULL;
+
+void ipcmutex_externalptr_finalize(SEXP);
+
+SEXP ipcmutex_externalptr(named_mutex *mtx)
+{
+    SEXP ext = PROTECT(R_MakeExternalPtr((void *) mtx, IPCMUTEX_TAG, NULL));
+    R_RegisterCFinalizerEx(ext, ipcmutex_externalptr_finalize, TRUE);
+    UNPROTECT(1);
+    return ext;
+}
+
+named_mutex *ipcmutex_externalptr_get_mutex(SEXP ext) {
+    bool test = (EXTPTRSXP == TYPEOF(ext)) &&
+        (IPCMUTEX_TAG == R_ExternalPtrTag(ext));
+    if (!test)
+        Rf_error("'ext' is not an IPCMutex external pointer");
+
+    return (named_mutex *) R_ExternalPtrAddr(ext);
+}
+
+void ipcmutex_externalptr_finalize(SEXP ext)
+{
+    named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
+    if (mtx == NULL)
+        return;
+
+    mtx->unlock();
+
+    delete mtx;
+    R_SetExternalPtrAddr(ext, NULL);
+}
+
 extern "C" {
 
-    const char *ipcmutex_id(SEXP id)
-    {
-        bool test = IS_SCALAR(id, STRSXP) && (STRING_ELT(id, 0) != R_NaString);
-        if (!test)
-            Rf_error("'id' must be character(1) and not NA");
-        return CHAR(STRING_ELT(id, 0));
-    }
-
-    // ExternalPtr
-
-    static SEXP IPCMUTEX_TAG = NULL;
-
-    void ipcmutex_externalptr_finalize(SEXP);
-
-    SEXP ipcmutex_externalptr(named_mutex *mtx)
-    {
-        SEXP ext = PROTECT(R_MakeExternalPtr((void *) mtx, IPCMUTEX_TAG, NULL));
-        R_RegisterCFinalizerEx(ext, ipcmutex_externalptr_finalize, TRUE);
-        UNPROTECT(1);
-        return ext;
-    }
-
-    named_mutex *ipcmutex_externalptr_get_mutex(SEXP ext) {
-        bool test = (EXTPTRSXP == TYPEOF(ext)) &&
-            (IPCMUTEX_TAG == R_ExternalPtrTag(ext));
-        if (!test)
-            Rf_error("'ext' is not an IPCMutex external pointer");
-
-        return (named_mutex *) R_ExternalPtrAddr(ext);
-    }
-
-    void ipcmutex_externalptr_finalize(SEXP ext)
-    {
-        named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
-        if (mtx == NULL)
-            return;
-
-        mtx->unlock();
-
-        delete mtx;
-        R_SetExternalPtrAddr(ext, NULL);
-    }
-
-    // API implementation
+    // mutex API implementation
 
     SEXP ipcmutex_lock(SEXP id)
     {
