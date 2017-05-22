@@ -41,6 +41,8 @@
 #' unlock(mtx2)
 #' unlock(mtx3)
 #'
+#' @useDynLib IPCMutex, .registration=TRUE
+#'
 #' @export
 lock <- function(id = .SHM_MUTEX_ID) {
     ext <- .Call(.ipcmutex_lock, id)
