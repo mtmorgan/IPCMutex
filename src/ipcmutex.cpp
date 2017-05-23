@@ -1,6 +1,5 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
-#include <iostream>
 
 using namespace boost::interprocess;
 
@@ -8,18 +7,14 @@ class IpcCounter
 {
 private:
 
-    bool _master;
-    std::string _id;
     managed_shared_memory *_shm;
     named_mutex *_mtx;
     int *_i;
 
 public:
     
-    IpcCounter(const char *id, bool master) : _id(id), _master(master) {
-        if (_master)
-            shared_memory_object::remove(id);
-        _shm = new managed_shared_memory{open_or_create, id, 4096};
+    IpcCounter(const char *id) {
+        _shm = new managed_shared_memory{open_or_create, id, 1024};
         _mtx = new named_mutex{open_or_create, id};
         _i = _shm->find_or_construct<int>("counter")();
     }
@@ -27,8 +22,6 @@ public:
     ~IpcCounter() {
         delete _shm;
         delete _mtx;
-        if (_master)
-            shared_memory_object::remove(_id.c_str());
     }
 
     int value() {
@@ -74,15 +67,8 @@ int ipccounter_n(SEXP n_sexp)
     return n;
 }
 
-bool ipccounter_master(SEXP master_sexp)
-{
-    bool master = Rf_asLogical(master_sexp);
-    if (R_NaInt == master)
-        Rf_error("'master' must logical(1) and not NA");
-    return master;
-}
-
 void ipccounter_externalptr_finalize(SEXP);
+
 IpcCounter *ipccounter_externalptr_get(SEXP);
 
 static SEXP IPCCOUNTER_TAG = NULL;
@@ -114,10 +100,9 @@ IpcCounter *ipccounter_externalptr_get(SEXP ext) {
     return (IpcCounter *) R_ExternalPtrAddr(ext);
 }
 
-SEXP ipccounter(SEXP id_sexp, SEXP master_sexp) {
+SEXP ipccounter(SEXP id_sexp) {
     const char *id = ipcmutex_id(id_sexp);
-    bool master = ipccounter_master(master_sexp);
-    IpcCounter *cnt = new IpcCounter(id, master);
+    IpcCounter *cnt = new IpcCounter(id);
     return ipccounter_externalptr(cnt);
 }
 
@@ -130,9 +115,8 @@ SEXP ipccounter_yield(SEXP ext) {
 
 SEXP ipccounter_value(SEXP ext) {
     IpcCounter *cnt = ipccounter_externalptr_get(ext);
-    if (NULL == cnt)
-        Rf_error("'counter' already released");
-    return Rf_ScalarInteger(cnt->value());
+    int value = (NULL == cnt) ? R_NaInt : cnt->value();
+    return Rf_ScalarInteger(value);
 }
 
 SEXP ipccounter_reset(SEXP ext, SEXP n_sexp) {
@@ -150,6 +134,12 @@ SEXP ipccounter_close(SEXP ext) {
     delete cnt;
     R_SetExternalPtrAddr(ext, NULL);
     return ext;
+}
+
+SEXP  ipccounter_remove(SEXP id_sexp) {
+    const char *id = ipcmutex_id(id_sexp);
+    bool status = shared_memory_object::remove(id);
+    return Rf_ScalarLogical(status);
 }
 
 // IpcMutex
@@ -237,11 +227,12 @@ extern "C" {
         {".ipcmutex_trylock", (DL_FUNC) & ipcmutex_trylock, 1},
         {".ipcmutex_locked", (DL_FUNC) & ipcmutex_locked, 1},
         // counter
-        {".ipccounter", (DL_FUNC) & ipccounter, 2},
+        {".ipccounter", (DL_FUNC) & ipccounter, 1},
         {".ipccounter_value", (DL_FUNC) & ipccounter_value, 1},
         {".ipccounter_reset", (DL_FUNC) & ipccounter_reset, 2},
         {".ipccounter_yield", (DL_FUNC) & ipccounter_yield, 1},
         {".ipccounter_close", (DL_FUNC) & ipccounter_close, 1},
+        {".ipccounter_remove", (DL_FUNC) & ipccounter_remove, 1},
         {NULL, NULL, 0}
     };
 

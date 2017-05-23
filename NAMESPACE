@@ -2,7 +2,9 @@
 
 S3method(close,Counter)
 export(.SHM_MUTEX_ID)
-export(count)
+export(cid)
+export(counter)
+export(ipcremove)
 export(lock)
 export(locked)
 export(reset)
