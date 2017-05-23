@@ -11,7 +11,7 @@
 #'     way of making an approximately unique or process-local counter.
 #'
 #' @examples
-#' cid("my")
+#' cid("egcounter")
 #'
 #' @useDynLib IPCMutex, .registration=TRUE
 #'
@@ -25,12 +25,13 @@ cid <- function(id) {
 #' @return \code{counter()} returns a \code{Counter-class} instance.
 #'
 #' @examples
-#' cnt <- counter(cid("example-counter"))
-#' on.exit(ipcremove(cid("example-counter")))
+#' (ipcremove(cid("egcounter")))
+#' cnt <- counter(cid("egcounter"))
+#' on.exit(ipcremove(cid("egcounter")))
 #'
 #' yield(cnt)
 #' yield(cnt)
-#' yield(counter(cid("example-counter")))
+#' yield(counter(cid("egcounter")))
 #'
 #' @export
 counter <- function(id) {
@@ -94,7 +95,7 @@ reset <- function(counter, n) {
 #' @examples
 #' close(cnt)
 #' tryCatch(yield(cnt), error = conditionMessage)
-#' yield(counter(cid("example-counter")))
+#' yield(counter(cid("egcounter")))
 #'
 #' @export
 close.Counter <- function(con) {

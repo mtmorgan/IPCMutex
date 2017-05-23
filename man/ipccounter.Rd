@@ -76,14 +76,15 @@ closed.}
 Inter-process counter
 }
 \examples{
-cid("my")
+cid("egcounter")
 
-cnt <- counter(cid("example-counter"))
-on.exit(ipcremove(cid("example-counter")))
+(ipcremove(cid("egcounter")))
+cnt <- counter(cid("egcounter"))
+on.exit(ipcremove(cid("egcounter")))
 
 yield(cnt)
 yield(cnt)
-yield(counter(cid("example-counter")))
+yield(counter(cid("egcounter")))
 
 value(cnt)
 
@@ -93,6 +94,6 @@ yield(cnt)
 
 close(cnt)
 tryCatch(yield(cnt), error = conditionMessage)
-yield(counter(cid("example-counter")))
+yield(counter(cid("egcounter")))
 
 }
