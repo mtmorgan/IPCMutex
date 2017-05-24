@@ -1,5 +1,5 @@
 library(IPCMutex)
-id <- cid("process-lock")
+id <- ipcid("session-lock")
 mtx <- mutex(id)
 
 mtx <- lock(mtx)

@@ -1,7 +1,7 @@
 library(IPCMutex)
 
-cid("my")
-cnt <- counter(cid("my"))
+id <- ipcid("my")
+cnt <- counter(id)
 cnt
 yield(cnt)
 yield(cnt)
@@ -9,25 +9,26 @@ close(cnt)
 
 tryCatch(yield(cnt), error = conditionMessage)
 
-cnt <- counter(cid("my"))
+cnt <- counter(id)
 yield(cnt)
 close(cnt)
 tryCatch(yield(cnt), error = conditionMessage)
 
-cnt <- counter(cid("my"))
+cnt <- counter(id)
 yield(cnt)
-ipcremove(cid("my"))
+ipcremove(id)
 
 ## new counter, new sequence
-yield(counter(cid("my")))
-yield(counter(cid("my")))
-counter(cid("my"))                      # current state
-ipcremove(cid("my"))                    # all processes done with counter
+yield(counter(id))
+yield(counter(id))
+counter(id)                          # current state
+
+ipcremove(id)                        # all processes done with counter
 
 ## existing counter, continuing
 yield(cnt)
 
-id <- cid("parallel")
+id <- ipcid("parallel")
 counter(id)
 
 fun <- function(i, id)

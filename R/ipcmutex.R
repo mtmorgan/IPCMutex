@@ -7,7 +7,7 @@
 #' @return \code{mutex()} returns a \code{Mutex-class} instance.
 #'
 #' @examples
-#' id <- cid("mtx-example")
+#' id <- ipcid("mtx-example")
 #' mtx <- mutex(id)
 #' mtx
 #' trylock(mtx)
@@ -24,7 +24,7 @@
 #' ipcremove(id)
 #'
 #' ## finalizer triggered on garbage collection
-#' id <- cid("mtx-gc")
+#' id <- ipcid("mtx-gc")
 #' mtx <- mutex(id)
 #'
 #' lock(mtx)
@@ -94,6 +94,10 @@ unlock <- function(mutex) {
 
 .id <- function(x) x@id
 
+#' @export
+ipcid.Mutex <- function(id)
+    .id(id)
+
 #' @rdname ipcmutex
 #'
 #' @param object An instance of class \code{Mutex}.
@@ -102,7 +106,7 @@ unlock <- function(mutex) {
 setMethod(show, "Mutex", function(object) {
     cat(
         "class: ", class(object), "\n",
-        "id: ", .id(object), "\n",
+        "ipcid(): ", ipcid(object), "\n",
         "locked(): ", locked(object), "\n",
         sep=""
     )

@@ -6,22 +6,22 @@
 #'     counters with the same \code{id}, including counters in
 #'     different processes, share the same state.
 #'
-#' @return \code{cid()} returns a character(1) identifier mangled to
+#' @return \code{ipcid()} returns a character(1) identifier mangled to
 #'     include the system process identifier, providing a convenient
 #'     way of making an approximately unique or process-local counter.
 #'
 #' @examples
-#' id <- cid("egcounter")
+#' id <- ipcid("egcounter")
 #' id
 #'
 #' @useDynLib IPCMutex, .registration=TRUE
 #'
 #' @export
-cid <- function(id)
-    UseMethod("cid")
+ipcid <- function(id)
+    UseMethod("ipcid")
 
 #' @export
-cid.default <- function(id) {
+ipcid.default <- function(id) {
     paste(as.character(id), Sys.getpid(), sep="::")
 }
 
@@ -134,7 +134,7 @@ ipcremove <- function(id) {
 )
 
 #' @export
-cid.Counter <- function(id)
+ipcid.Counter <- function(id)
     .id(id)
 
 #' @rdname ipccounter
@@ -145,7 +145,7 @@ cid.Counter <- function(id)
 setMethod(show, "Counter", function(object) {
     cat(
         "class: ", class(object), "\n",
-        "cid(): ", cid(object), "\n",
+        "ipcid(): ", ipcid(object), "\n",
         "value(): ", value(object), "\n",
         sep=""
     )

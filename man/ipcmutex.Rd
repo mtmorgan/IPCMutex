@@ -44,7 +44,7 @@ On success, \code{trylock()} returns \code{TRUE} if the
 Inter-process locks
 }
 \examples{
-id <- cid("mtx-example")
+id <- ipcid("mtx-example")
 mtx <- mutex(id)
 mtx
 trylock(mtx)
@@ -61,7 +61,7 @@ locked(mty)
 ipcremove(id)
 
 ## finalizer triggered on garbage collection
-id <- cid("mtx-gc")
+id <- ipcid("mtx-gc")
 mtx <- mutex(id)
 
 lock(mtx)
