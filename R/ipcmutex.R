@@ -2,10 +2,6 @@
 #'
 #' @rdname ipcmutex
 #'
-#' @param id character(1) identifying the lock to be obtained.
-#'
-#' @return \code{mutex()} returns a \code{Mutex-class} instance.
-#'
 #' @examples
 #' id <- ipcid("mtx-example")
 #' mtx <- mutex(id)
@@ -36,6 +32,15 @@
 #' ipcremove(id)
 #'
 #' @useDynLib IPCMutex, .registration=TRUE
+#'
+#' @export
+.Mutex <- setClass("Mutex", contains = "IPC")
+
+#' @rdname ipcmutex
+#'
+#' @param id character(1) identifying the lock to be obtained.
+#'
+#' @return \code{mutex()} returns a \code{Mutex-class} instance.
 #'
 #' @export
 mutex <- function(id) {
@@ -83,16 +88,6 @@ unlock <- function(mutex) {
     .Call(.ipcmutex_unlock, .ext(mutex))
     mutex
 }
-
-#' @import methods
-.Mutex <- setClass(
-    "Mutex",
-    slots = c(ext = "externalptr", id = "character")
-)
-
-.ext <- function(x) x@ext
-
-.id <- function(x) x@id
 
 #' @export
 ipcid.Mutex <- function(id)

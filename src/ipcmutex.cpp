@@ -1,15 +1,18 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/named_mutex.hpp>
 
 using namespace boost::interprocess;
 
 class IpcMutex
 {
+
+protected:
+
+    managed_shared_memory *shm;
+    
 private:
 
     std::string id;
-    managed_shared_memory *shm;
     interprocess_mutex *mtx;
     bool is_locked;
 
@@ -23,6 +26,10 @@ public:
     ~IpcMutex() {
         unlock();
         delete shm;
+    }
+
+    bool locked() {
+        return is_locked;
     }
 
     bool lock() {
@@ -42,48 +49,39 @@ public:
         return is_locked;
     }
 
-    bool locked() {
-        return is_locked;
-    }
-
 };
 
-class IpcCounter
+class IpcCounter : IpcMutex
 {
+
 private:
 
-    managed_shared_memory *shm;
-    interprocess_mutex *mtx;
     int *i;
 
 public:
     
-    IpcCounter(const char *id) {
-        shm = new managed_shared_memory{open_or_create, id, 1024};
-        mtx = shm->find_or_construct<interprocess_mutex>("mtx")();
+    IpcCounter(const char *id) : IpcMutex(id) {
         i = shm->find_or_construct<int>("i")();
     }
 
-    ~IpcCounter() {
-        delete shm;
-    }
+    ~IpcCounter() {}
 
     int value() {
         return *i + 1;
     }
 
     int reset(int n) {
-        mtx->lock();
+        lock();
         *i = n - 1;
-        mtx->unlock();
+        unlock();
         return n;
     }
 
     int yield() {
         int result;
-        mtx->lock();
+        lock();
         result = ++(*i);
-        mtx->unlock();
+        unlock();
         return result;
     }
 
