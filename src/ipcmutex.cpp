@@ -14,9 +14,11 @@ private:
 public:
     
     IpcCounter(const char *id) {
-        _shm = new managed_shared_memory{open_or_create, id, 1024};
         _mtx = new named_mutex{open_or_create, id};
+        _mtx->lock();
+        _shm = new managed_shared_memory{open_or_create, id, 4096};
         _i = _shm->find_or_construct<int>("counter")();
+        _mtx->unlock();
     }
 
     ~IpcCounter() {
@@ -25,11 +27,7 @@ public:
     }
 
     int value() {
-        int result;
-        _mtx->lock();
-        result = *_i + 1;
-        _mtx->unlock();
-        return result;
+        return *_i + 1;
     }
 
     int reset(int n) {
