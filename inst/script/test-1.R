@@ -1,20 +1,20 @@
 library(IPCMutex)
 id <- ipcid("session-lock")
-mtx <- mutex(id)
 
-mtx <- lock(mtx)
-trylock(mtx)
-unlock(mtx)
-tryCatch(unlock(mtx), error=conditionMessage)
-trylock(mtx)
-trylock(mtx)
-unlock(mtx)
+lock(id)
+try_lock(id)
+unlock(id)
+tryCatch(unlock(id), error=conditionMessage)
+try_lock(id)
+try_lock(id)
+unlock(id)
 
 fun <- function(i, id) {
-    mtx <- IPCMutex::mutex(id)
-    res <- IPCMutex::trylock(mtx)
-    if (res)
+    res <- IPCMutex::try_lock(id)
+    if (res) {
         Sys.sleep(1)
+        IPCMutex::unlock(id)
+    }
     res
 }
 

@@ -15,11 +15,7 @@
 #' id
 #'
 #' @export
-ipcid <- function(id)
-    UseMethod("ipcid")
-
-#' @export
-ipcid.default <- function(id) {
+ipcid <- function(id) {
     paste(as.character(id), Sys.getpid(), sep="::")
 }
 

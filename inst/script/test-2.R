@@ -1,38 +1,19 @@
 library(IPCMutex)
 
 id <- ipcid("my")
-cnt <- counter(id)
-cnt
-yield(cnt)
-yield(cnt)
-close(cnt)
-
-tryCatch(yield(cnt), error = conditionMessage)
-
-cnt <- counter(id)
-yield(cnt)
-close(cnt)
-tryCatch(yield(cnt), error = conditionMessage)
-
-cnt <- counter(id)
-yield(cnt)
+yield(id)
+yield(id)
 ipcremove(id)
 
 ## new counter, new sequence
-yield(counter(id))
-yield(counter(id))
-counter(id)                          # current state
-
+yield(id)
+yield(id)
 ipcremove(id)                        # all processes done with counter
 
-## existing counter, continuing
-yield(cnt)
-
 id <- ipcid("parallel")
-counter(id)
 
 fun <- function(i, id)
-    IPCMutex::yield(IPCMutex::counter(id))
+    IPCMutex::yield(id)
 
 BiocParallel::register(BiocParallel::SnowParam(4))
 res <- unlist(BiocParallel::bplapply(1:50, fun, id))
@@ -61,7 +42,7 @@ stopifnot(
 ipcremove(id)
 
 ## No ipcremove() call, so persistent across independent processes
-counter("test-persistent")              # current state
-res <- unlist(BiocParallel::bplapply(1:50, fun, "test-persistent"))
+id <- "test-persistent"
+res <- unlist(BiocParallel::bplapply(1:50, fun, id))
 range(res)
 stopifnot(!any(duplicated(res)))

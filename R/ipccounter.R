@@ -2,41 +2,22 @@
 #'
 #' @rdname ipccounter
 #'
+#' @param id character(1) counter or mutex identifier
+#'
 #' @useDynLib IPCMutex, .registration=TRUE
 #'
-#' @rdname ipccounter
-#'
-#' @export
-.Counter <- setClass("Counter", contains = "IPC")
-
-#' @rdname ipccounter
-#'
-#' @return \code{counter()} returns a \code{Counter-class} instance.
+#' @return \code{yield()} returns an integer(1) value representing
+#'     the next number in sequence. The first value returned is 1.
 #'
 #' @examples
 #' id <- ipcid("cnt-example")
-#' cnt <- counter(id)
 #'
-#' yield(cnt)
-#' yield(cnt)
-#' yield(counter(id))
+#' yield(id)
+#' yield(id)
 #'
 #' @export
-counter <- function(id) {
-    ext <- .Call(.ipccounter, id)
-    .Counter(ext = ext, id = id)
-}
-
-#' @rdname ipccounter
-#'
-#' @param  counter instance of class \code{Count}.
-#'
-#' @return \code{counter()} returns an integer(1) value representing
-#'     the next number in sequence. The first value returned is 1.
-#'
-#' @export
-yield <- function(counter) {
-    .Call(.ipccounter_yield, .ext(counter))
+yield <- function(id) {
+    .Call(.ipc_yield, id)
 }
 
 #' @rdname ipccounter
@@ -47,69 +28,29 @@ yield <- function(counter) {
 #'     \code{NA}.
 #'
 #' @examples
-#' value(cnt)
-#' yield(cnt)
+#' value(id)
+#' yield(id)
 #'
 #' @export
-value <- function(counter) {
-    .Call(.ipccounter_value, .ext(counter))
+value <- function(id) {
+    .Call(.ipc_value, id)
 }
 
 #' @rdname ipccounter
 #'
-#' @param n integer(1) value from which \code{yield(counter)} will
+#' @param n integer(1) value from which \code{yield()} will
 #'     increment.
 #'
 #' @return \code{reset()} returns \code{n}, invisibly.
 #'
 #' @examples
-#' reset(cnt, 1)
-#' value(cnt)
-#' yield(cnt)
-#'
-#' @export
-reset <- function(counter, n = 1) {
-    invisible(.Call(.ipccounter_reset, .ext(counter), n))
-}
-
-#' @rdname ipccounter
-#'
-#' @param con A \code{Counter-class} instance that has not yet been
-#'     closed.
-#'
-#' @param ... Ignored.
-#'
-#' @return \code{close()} returns \code{Counter-class} instance that
-#'     can no longer count. Creating a new counter with the same
-#'     \code{id} continues counting.
-#'
-#' @examples
-#' close(cnt)
-#' tryCatch(yield(cnt), error = conditionMessage)
-#' yield(counter(id))
+#' reset(id, 10)
+#' value(id)
+#' yield(id)
 #'
 #' ipcremove(id)
 #'
 #' @export
-close.Counter <- function(con, ...) {
-    ext <- .Call(.ipccounter_close, .ext(con))
-    initialize(con, ext = ext)
+reset <- function(id, n = 1) {
+    invisible(.Call(.ipc_reset, id, n))
 }
-
-#' @export
-ipcid.Counter <- function(id)
-    .id(id)
-
-#' @rdname ipccounter
-#'
-#' @param object An instance of class \code{Counter}.
-#'
-#' @export
-setMethod(show, "Counter", function(object) {
-    cat(
-        "class: ", class(object), "\n",
-        "ipcid(): ", ipcid(object), "\n",
-        "value(): ", value(object), "\n",
-        sep=""
-    )
-})
