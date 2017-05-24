@@ -1,6 +1,6 @@
 Package: IPCMutex
 Title: A mutex implementation using the Boost.Interprocess library
-Version: 0.0.4
+Version: 0.0.5
 Authors@R: person(
     "Martin", "Morgan", email = "Martin.Morgan@RoswellPark.org",
     role = c("aut", "cre"))
