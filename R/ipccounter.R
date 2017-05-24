@@ -11,13 +11,18 @@
 #'     way of making an approximately unique or process-local counter.
 #'
 #' @examples
-#' cid("egcounter")
+#' id <- cid("egcounter")
+#' id
 #'
 #' @useDynLib IPCMutex, .registration=TRUE
 #'
 #' @export
-cid <- function(id) {
-    paste(id, Sys.getpid(), sep="::")
+cid <- function(id)
+    UseMethod("cid")
+
+#' @export
+cid.default <- function(id) {
+    paste(as.character(id), Sys.getpid(), sep="::")
 }
 
 #' @rdname ipccounter
@@ -25,13 +30,11 @@ cid <- function(id) {
 #' @return \code{counter()} returns a \code{Counter-class} instance.
 #'
 #' @examples
-#' (ipcremove(cid("egcounter")))
-#' cnt <- counter(cid("egcounter"))
-#' on.exit(ipcremove(cid("egcounter")))
+#' cnt <- counter(id)
 #'
 #' yield(cnt)
 #' yield(cnt)
-#' yield(counter(cid("egcounter")))
+#' yield(counter(id))
 #'
 #' @export
 counter <- function(id) {
@@ -60,6 +63,7 @@ yield <- function(counter) {
 #'
 #' @examples
 #' value(cnt)
+#' yield(cnt)
 #'
 #' @export
 value <- function(counter) {
@@ -79,7 +83,7 @@ value <- function(counter) {
 #' yield(cnt)
 #'
 #' @export
-reset <- function(counter, n) {
+reset <- function(counter, n = 1) {
     invisible(.Call(.ipccounter_reset, .ext(counter), n))
 }
 
@@ -88,6 +92,8 @@ reset <- function(counter, n) {
 #' @param con A \code{Counter-class} instance that has not yet been
 #'     closed.
 #'
+#' @param ... Ignored.
+#'
 #' @return \code{close()} returns \code{Counter-class} instance that
 #'     can no longer count. Creating a new counter with the same
 #'     \code{id} continues counting.
@@ -95,10 +101,10 @@ reset <- function(counter, n) {
 #' @examples
 #' close(cnt)
 #' tryCatch(yield(cnt), error = conditionMessage)
-#' yield(counter(cid("egcounter")))
+#' yield(counter(id))
 #'
 #' @export
-close.Counter <- function(con) {
+close.Counter <- function(con, ...) {
     ext <- .Call(.ipccounter_close, .ext(con))
     initialize(con, ext = ext)
 }
@@ -110,6 +116,9 @@ close.Counter <- function(con) {
 #'     because the resources has already been released). Use
 #'     \code{ipcremove()} to remove external state associated with
 #'     \code{id}.
+#'
+#' @examples
+#' ipcremove(id)
 #'
 #' @export
 ipcremove <- function(id) {
@@ -124,6 +133,10 @@ ipcremove <- function(id) {
     slots = c(ext = "externalptr", id = "character")
 )
 
+#' @export
+cid.Counter <- function(id)
+    .id(id)
+
 #' @rdname ipccounter
 #'
 #' @param object An instance of class \code{Counter}.
@@ -132,7 +145,7 @@ ipcremove <- function(id) {
 setMethod(show, "Counter", function(object) {
     cat(
         "class: ", class(object), "\n",
-        "id: ", .id(object), "\n",
+        "cid(): ", cid(object), "\n",
         "value(): ", value(object), "\n",
         sep=""
     )

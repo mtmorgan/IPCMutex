@@ -22,9 +22,9 @@ yield(counter)
 
 value(counter)
 
-reset(counter, n)
+reset(counter, n = 1)
 
-\method{close}{Counter}(con)
+\method{close}{Counter}(con, ...)
 
 ipcremove(id)
 
@@ -42,6 +42,8 @@ increment.}
 
 \item{con}{A \code{Counter-class} instance that has not yet been
 closed.}
+
+\item{...}{Ignored.}
 
 \item{object}{An instance of class \code{Counter}.}
 }
@@ -76,17 +78,17 @@ closed.}
 Inter-process counter
 }
 \examples{
-cid("egcounter")
+id <- cid("egcounter")
+id
 
-(ipcremove(cid("egcounter")))
-cnt <- counter(cid("egcounter"))
-on.exit(ipcremove(cid("egcounter")))
+cnt <- counter(id)
 
 yield(cnt)
 yield(cnt)
-yield(counter(cid("egcounter")))
+yield(counter(id))
 
 value(cnt)
+yield(cnt)
 
 reset(cnt, 1)
 value(cnt)
@@ -94,6 +96,8 @@ yield(cnt)
 
 close(cnt)
 tryCatch(yield(cnt), error = conditionMessage)
-yield(counter(cid("egcounter")))
+yield(counter(id))
+
+ipcremove(id)
 
 }
