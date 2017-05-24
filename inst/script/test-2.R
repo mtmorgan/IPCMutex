@@ -22,18 +22,13 @@ ipcremove(cid("my"))
 yield(counter(cid("my")))
 yield(counter(cid("my")))
 counter(cid("my"))                      # current state
-ipcremove(cid("my"))
+ipcremove(cid("my"))                    # all processes done with counter
 
 ## existing counter, continuing
 yield(cnt)
 
-## best practice, session-specific counter
-counter(cid("my"))
-on.exit(ipcremove(cid("my")))
-
 id <- cid("parallel")
 counter(id)
-on.exit(ipcremove(id))
 
 fun <- function(i, id)
     IPCMutex::yield(IPCMutex::counter(id))
@@ -61,6 +56,8 @@ stopifnot(
     identical(range(res), 100L + c(1L, 50L)),
     !any(duplicated(res))
 )
+
+ipcremove(id)
 
 ## No ipcremove() call, so persistent across independent processes
 counter("test-persistent")              # current state
