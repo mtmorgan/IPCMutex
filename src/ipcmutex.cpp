@@ -4,6 +4,50 @@
 
 using namespace boost::interprocess;
 
+class IpcMutex
+{
+private:
+
+    std::string id;
+    managed_shared_memory *shm;
+    interprocess_mutex *mtx;
+    bool is_locked;
+
+public:
+
+    IpcMutex(const char *_id) : id(_id), is_locked(false) {
+        shm = new managed_shared_memory(open_or_create, id.c_str(), 1024);
+        mtx = shm->find_or_construct<interprocess_mutex>("mtx")();
+    }
+
+    ~IpcMutex() {
+        unlock();
+        delete shm;
+    }
+
+    bool lock() {
+        mtx->lock();
+        is_locked = true;
+        return is_locked;
+    }
+
+    bool try_lock() {
+        is_locked = mtx->try_lock();
+        return is_locked;
+    }
+
+    bool unlock() {
+        mtx->unlock();
+        is_locked = false;
+        return is_locked;
+    }
+
+    bool locked() {
+        return is_locked;
+    }
+
+};
+
 class IpcCounter
 {
 private:
@@ -47,13 +91,21 @@ public:
 
 #include <Rinternals.h>
 
-const char *ipcmutex_id(SEXP id)
+const char *ipc_id(SEXP id)
 {
     bool test = IS_SCALAR(id, STRSXP) && (STRING_ELT(id, 0) != R_NaString);
     if (!test)
         Rf_error("'id' must be character(1) and not NA");
     return CHAR(STRING_ELT(id, 0));
 }
+
+SEXP ipc_remove(SEXP id_sexp) {
+    const char *id = ipc_id(id_sexp);
+    bool status = shared_memory_object::remove(id);
+    return Rf_ScalarLogical(status);
+}
+
+// Counter
 
 int ipccounter_n(SEXP n_sexp)
 {
@@ -97,7 +149,7 @@ IpcCounter *ipccounter_externalptr_get(SEXP ext) {
 }
 
 SEXP ipccounter(SEXP id_sexp) {
-    const char *id = ipcmutex_id(id_sexp);
+    const char *id = ipc_id(id_sexp);
     IpcCounter *cnt = new IpcCounter(id);
     return ipccounter_externalptr(cnt);
 }
@@ -132,19 +184,13 @@ SEXP ipccounter_close(SEXP ext) {
     return ext;
 }
 
-SEXP  ipccounter_remove(SEXP id_sexp) {
-    const char *id = ipcmutex_id(id_sexp);
-    bool status = shared_memory_object::remove(id);
-    return Rf_ScalarLogical(status);
-}
-
 // IpcMutex
 
 static SEXP IPCMUTEX_TAG = NULL;
 
 void ipcmutex_externalptr_finalize(SEXP);
 
-SEXP ipcmutex_externalptr(named_mutex *mtx)
+SEXP ipcmutex_externalptr(IpcMutex *mtx)
 {
     SEXP ext = PROTECT(R_MakeExternalPtr((void *) mtx, IPCMUTEX_TAG, NULL));
     R_RegisterCFinalizerEx(ext, ipcmutex_externalptr_finalize, TRUE);
@@ -152,62 +198,59 @@ SEXP ipcmutex_externalptr(named_mutex *mtx)
     return ext;
 }
 
-named_mutex *ipcmutex_externalptr_get_mutex(SEXP ext) {
+IpcMutex *ipcmutex_externalptr_get_mutex(SEXP ext, bool check_valid) {
     bool test = (EXTPTRSXP == TYPEOF(ext)) &&
         (IPCMUTEX_TAG == R_ExternalPtrTag(ext));
     if (!test)
         Rf_error("'ext' is not an IPCMutex external pointer");
 
-    return (named_mutex *) R_ExternalPtrAddr(ext);
+    IpcMutex *mtx = (IpcMutex *) R_ExternalPtrAddr(ext);
+    if (check_valid && (NULL == mtx))
+        Rf_error("lock removed");
+    
+    return mtx;
 }
 
 void ipcmutex_externalptr_finalize(SEXP ext)
 {
-    named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
+    IpcMutex *mtx = ipcmutex_externalptr_get_mutex(ext, false);
     if (mtx == NULL)
         return;
-
-    mtx->unlock();
-
     delete mtx;
     R_SetExternalPtrAddr(ext, NULL);
 }
 
 // mutex API implementation
 
-SEXP ipcmutex_lock(SEXP id)
+SEXP ipcmutex(SEXP id_sexp)
 {
-    const char *cid = ipcmutex_id(id);
-    named_mutex *mtx = new named_mutex{open_or_create, cid};
-
-    mtx->lock();
+    const char *id = ipc_id(id_sexp);
+    IpcMutex *mtx = new IpcMutex(id);
     return ipcmutex_externalptr(mtx);
 }
 
-SEXP ipcmutex_trylock(SEXP id)
+SEXP ipcmutex_lock(SEXP ext)
 {
-    const char *cid = ipcmutex_id(id);
-    named_mutex *mtx = new named_mutex{open_or_create, cid};
+    IpcMutex *mtx = ipcmutex_externalptr_get_mutex(ext, true);
+    return Rf_ScalarLogical(mtx->lock());
+}
 
-    bool status = mtx->try_lock();
-    return status ? ipcmutex_externalptr(mtx) : R_NilValue;
+SEXP ipcmutex_trylock(SEXP ext)
+{
+    IpcMutex *mtx = ipcmutex_externalptr_get_mutex(ext, true);
+    return Rf_ScalarLogical(mtx->try_lock());
 }
 
 SEXP ipcmutex_unlock(SEXP ext)
 {
-    named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
-    if (mtx == NULL)
-        Rf_error("lock already released");
-    mtx->unlock();
-
-    R_SetExternalPtrAddr(ext, NULL);
-    return ext;
+    IpcMutex *mtx = ipcmutex_externalptr_get_mutex(ext, true);
+    return Rf_ScalarLogical(mtx->unlock());
 }
 
 SEXP ipcmutex_locked(SEXP ext)
 {
-    named_mutex *mtx = ipcmutex_externalptr_get_mutex(ext);
-    return Rf_ScalarLogical(NULL != mtx);
+    IpcMutex *mtx = ipcmutex_externalptr_get_mutex(ext, true);
+    return Rf_ScalarLogical(mtx->locked());
 }
 
 // expose to R
@@ -217,18 +260,19 @@ SEXP ipcmutex_locked(SEXP ext)
 extern "C" {
 
     static const R_CallMethodDef callMethods[] = {
+        {".ipc_remove", (DL_FUNC) & ipc_remove, 1},
         // lock
+        {".ipcmutex", (DL_FUNC) & ipcmutex, 1},
+        {".ipcmutex_locked", (DL_FUNC) & ipcmutex_locked, 1},
         {".ipcmutex_lock", (DL_FUNC) & ipcmutex_lock, 1},
         {".ipcmutex_unlock", (DL_FUNC) & ipcmutex_unlock, 1},
         {".ipcmutex_trylock", (DL_FUNC) & ipcmutex_trylock, 1},
-        {".ipcmutex_locked", (DL_FUNC) & ipcmutex_locked, 1},
         // counter
         {".ipccounter", (DL_FUNC) & ipccounter, 1},
         {".ipccounter_value", (DL_FUNC) & ipccounter_value, 1},
         {".ipccounter_reset", (DL_FUNC) & ipccounter_reset, 2},
         {".ipccounter_yield", (DL_FUNC) & ipccounter_yield, 1},
         {".ipccounter_close", (DL_FUNC) & ipccounter_close, 1},
-        {".ipccounter_remove", (DL_FUNC) & ipccounter_remove, 1},
         {NULL, NULL, 0}
     };
 

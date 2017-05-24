@@ -122,7 +122,7 @@ close.Counter <- function(con, ...) {
 #'
 #' @export
 ipcremove <- function(id) {
-    invisible(.Call(.ipccounter_remove, id))
+    invisible(.Call(.ipc_remove, id))
 }
 
 #' @rdname ipccounter

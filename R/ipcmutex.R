@@ -4,75 +4,84 @@
 #'
 #' @param id character(1) identifying the lock to be obtained.
 #'
-#' @return \code{lock()} returns a \code{Mutex-class} instance.
+#' @return \code{mutex()} returns a \code{Mutex-class} instance.
 #'
 #' @examples
-#' mtx <- lock()
+#' id <- cid("mtx-example")
+#' mtx <- mutex(id)
 #' mtx
-#' locked(mtx)
-#' (mtx1 <- trylock())
+#' trylock(mtx)
 #' unlock(mtx)
 #' locked(mtx)
-#'
-#' (mtx <- trylock())
-#' unlock(mtx)
-#'
-#' ## can't unlock() twice
-#' tryCatch(unlock(mtx), error = conditionMessage)
 #'
 #' ## reference semantics
-#' mty <- mtx <- lock()
+#' mty <- mtx <- mutex(id)
+#' lock(mtx)
 #' locked(mty)
 #' unlock(mtx)
 #' locked(mty)
+#'
+#' ipcremove(id)
 #'
 #' ## finalizer triggered on garbage collection
-#' lock()
-#' gc(); gc()
-#' mtx <- lock()
-#' unlock(mtx)
+#' id <- cid("mtx-gc")
+#' mtx <- mutex(id)
 #'
-#' ## named locks
-#' mtx1 <- lock("mutex 1")
-#' mtx2 <- lock("mutex 2")
-#' trylock("mutex 1")
-#' (mtx3 <- trylock("mutex 3"))
-#' unlock(mtx1)
-#' unlock(mtx2)
-#' unlock(mtx3)
+#' lock(mtx)
+#' locked(mtx)
+#' rm(mtx)
+#' gc(); gc()
+#' locked(mutex(id))
+#'
+#' ipcremove(id)
 #'
 #' @useDynLib IPCMutex, .registration=TRUE
 #'
 #' @export
-lock <- function(id = .SHM_MUTEX_ID) {
-    ext <- .Call(.ipcmutex_lock, id)
+mutex <- function(id) {
+    ext <- .Call(.ipcmutex, id)
     .Mutex(ext = ext, id = id)
 }
 
 #' @rdname ipcmutex
 #'
-#' @return On success, \code{trylock()} returns a \code{Mutex-class}
-#'     instance containing an external pointer to the lock. On
-#'     failure, \code{trylock()} returns NULL.
+#' @return \code{locked()} returns TRUE when \code{mutex} is locked,
+#'     and FALSE otherwise.
 #'
 #' @export
-trylock <- function(id = .SHM_MUTEX_ID) {
-    ext <- .Call(.ipcmutex_trylock, id)
-    if (!is.null(ext))
-        ext <- .Mutex(ext = ext, id = id)
-    ext
+locked <- function(mutex)
+    .Call(.ipcmutex_locked, .ext(mutex))
+
+#' @rdname ipccounter
+#'
+#' @param mutex An instance of class \code{Mutex}.
+#'
+#' @return \code{lock()} returns a \code{Mutex-class} instance.
+#'
+#' @export
+lock <- function(mutex) {
+    .Call(.ipcmutex_lock, .ext(mutex))
+    mutex
 }
 
 #' @rdname ipcmutex
 #'
-#' @param mutex An instance of class \code{Mutex}.
+#' @return On success, \code{trylock()} returns \code{TRUE} if the
+#'     lock is obtained, \code{FALSE} otherwise.
 #'
-#' @return \code{unlock()} returns a \code{Mutex-class} instance with
+#' @export
+trylock <- function(mutex) {
+    .Call(.ipcmutex_trylock, .ext(mutex))
+}
+
+#' @rdname ipcmutex
+#'
+#' @return \code{unlock()} returns a \code{Mutex-class} instance.
 #'
 #' @export
 unlock <- function(mutex) {
-    ext <- .Call(.ipcmutex_unlock, .ext(mutex))
-    initialize(mutex, ext = ext)
+    .Call(.ipcmutex_unlock, .ext(mutex))
+    mutex
 }
 
 #' @import methods
@@ -84,17 +93,6 @@ unlock <- function(mutex) {
 .ext <- function(x) x@ext
 
 .id <- function(x) x@id
-
-.locked <- function(x) .Call(.ipcmutex_locked, .ext(x))
-
-#' @rdname ipcmutex
-#'
-#' @return \code{locked()} returns TRUE when \code{mutex} is locked,
-#'     and FALSE otherwise.
-#'
-#' @export
-locked <- function(mutex)
-    .locked(mutex)
 
 #' @rdname ipcmutex
 #'

@@ -1,31 +1,33 @@
 library(IPCMutex)
-mtx <- lock()
-trylock()
-unlock(mtx)
-trylock()
-trylock()
-gc()
-(mtx <- trylock())
-unlock(mtx)
-(mtx <- lock("foo"))
+id <- cid("process-lock")
+mtx <- mutex(id)
+
+mtx <- lock(mtx)
+trylock(mtx)
 unlock(mtx)
 tryCatch(unlock(mtx), error=conditionMessage)
+trylock(mtx)
+trylock(mtx)
+unlock(mtx)
 
-gc()
 fun <- function(i, id) {
-    res <- IPCMutex::trylock(id)
-    Sys.sleep(1)
-    !is.null(res)
+    mtx <- IPCMutex::mutex(id)
+    res <- IPCMutex::trylock(mtx)
+    if (res)
+        Sys.sleep(1)
+    res
 }
 
-BiocParallel::register(BiocParallel::MulticoreParam(2))
-system.time(res <- BiocParallel::bplapply(1:4, fun, "test1"))
-res
-
-BiocParallel::register(BiocParallel::SnowParam(2))
-system.time(res <- BiocParallel::bplapply(1:4, fun, "test2"))
-res
+BiocParallel::register(BiocParallel::MulticoreParam(4))
+system.time(res <- BiocParallel::bplapply(1:4, fun, id))
+stopifnot(sum(unlist(res)) == 1L)
 
 BiocParallel::register(BiocParallel::SnowParam(4))
-system.time(res <- BiocParallel::bplapply(1:4, fun, "test3"))
-res
+system.time(res <- BiocParallel::bplapply(1:4, fun, id))
+stopifnot(sum(unlist(res)) == 1L)
+
+BiocParallel::register(BiocParallel::SnowParam(4))
+system.time(res <- BiocParallel::bplapply(1:4, fun, id))
+stopifnot(sum(unlist(res)) == 1L)
+
+ipcremove(id)
