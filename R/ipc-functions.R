@@ -38,4 +38,3 @@ ipcid.default <- function(id) {
 ipcremove <- function(id) {
     invisible(.Call(.ipc_remove, id))
 }
-
