@@ -10,25 +10,27 @@ ipcid(id)
 ipcremove(id)
 }
 \arguments{
-\item{id}{character(1) identifying the counter. By default,
-counters with the same \code{id}, including counters in
-different processes, share the same state.}
+\item{id}{character(1) (optional for \code{ipcid()}) identifier
+string for mutex or counter.}
 }
 \value{
-\code{ipcid()} returns a character(1) identifier mangled to
-    include the system process identifier, providing a convenient
-    way of making an approximately unique or process-local counter.
+\code{ipcid()} returns a character(1) unique identifier,
+    with \code{id} (if not missing) prepended.
 
 \code{ipcremove()} returns (invisibly) \code{TRUE} if
     external resources were release or \code{FALSE} if not (e.g.,
-    because the resources has already been released). Use
-    \code{ipcremove()} to remove external state associated with
-    \code{id}.
+    because the resources has already been released).
 }
 \description{
-Utilities for working with IPC objects
+Use \code{ipcid()} to generate a unique mutex or
+    counter identifier. A mutex or counter with the same \code{id},
+    including those in different processes, share the same state.
+
+\code{ipcremove()} removes external state associated
+    with mutex or counters created with \code{id}.
 }
 \examples{
+ipcid()
 id <- ipcid("example-identifier")
 id
 

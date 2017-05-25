@@ -1,3 +1,13 @@
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+std::string uuid_generate()
+{
+    // generator could be static for (not important) performance
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    return boost::uuids::to_string(uuid);
+}
+
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
@@ -118,6 +128,14 @@ SEXP ipc_remove(SEXP id_sexp) {
     return Rf_ScalarLogical(status);
 }
 
+// uuid
+
+SEXP ipc_uuid()
+{
+    std::string uuid = uuid_generate();
+    return Rf_ScalarString(mkChar(uuid.c_str()));
+}
+
 // mutex
 
 SEXP ipc_locked(SEXP id_sexp)
@@ -176,6 +194,8 @@ SEXP ipc_yield(SEXP id_sexp)
 extern "C" {
 
     static const R_CallMethodDef callMethods[] = {
+        // uuid
+        {".ipc_uuid", (DL_FUNC) & ipc_uuid, 0},
         // lock
         {".ipc_lock", (DL_FUNC) & ipc_lock, 1},
         {".ipc_try_lock", (DL_FUNC) & ipc_try_lock, 1},
