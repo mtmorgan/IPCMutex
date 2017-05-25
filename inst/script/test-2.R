@@ -1,6 +1,6 @@
 library(IPCMutex)
 
-id <- ipcid("my")
+id <- ipcid()
 yield(id)
 yield(id)
 ipcremove(id)
@@ -10,7 +10,7 @@ yield(id)
 yield(id)
 ipcremove(id)                        # all processes done with counter
 
-id <- ipcid("parallel")
+id <- ipcid()                           # for use in parallel code
 
 fun <- function(i, id)
     IPCMutex::yield(id)

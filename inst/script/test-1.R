@@ -1,5 +1,5 @@
 library(IPCMutex)
-id <- ipcid("session-lock")
+id <- ipcid()
 
 lock(id)
 try_lock(id)

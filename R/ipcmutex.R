@@ -5,7 +5,7 @@
 #' @param id character(1) identifying the lock to be obtained.
 #'
 #' @examples
-#' id <- ipcid("mtx-example")
+#' id <- ipcid()
 #'
 #' lock(id)
 #' try_lock(id)

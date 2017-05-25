@@ -10,7 +10,7 @@
 #'     the next number in sequence. The first value returned is 1.
 #'
 #' @examples
-#' id <- ipcid("cnt-example")
+#' id <- ipcid()
 #'
 #' yield(id)
 #' yield(id)
