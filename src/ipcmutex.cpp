@@ -90,19 +90,23 @@ public:
 
 // internal
 
-const char *ipc_id(SEXP id)
+const char *ipc_id(SEXP id_sexp)
 {
-    bool test = IS_SCALAR(id, STRSXP) && (STRING_ELT(id, 0) != R_NaString);
+    bool test =
+        IS_SCALAR(id_sexp, STRSXP) && (R_NaString != STRING_ELT(id_sexp, 0));
     if (!test)
         Rf_error("'id' must be character(1) and not NA");
-    return CHAR(STRING_ELT(id, 0));
+    return CHAR(STRING_ELT(id_sexp, 0));
 }
 
-int ipccounter_n(SEXP n_sexp)
+int ipc_n(SEXP n_sexp)
 {
+    PROTECT(n_sexp = Rf_coerceVector(n_sexp, INTSXP));
+    bool test = IS_SCALAR(n_sexp, INTSXP) && (R_NaInt != Rf_asInteger(n_sexp));
+    if (!test)
+        Rf_error("'n' cannot be coerced to integer(1) and not NA");
     int n = Rf_asInteger(n_sexp);
-    if (R_NaInt == n)
-        Rf_error("'n' must be integer(1) and not NA");
+    UNPROTECT(1);
     return n;
 }
 
@@ -155,7 +159,7 @@ SEXP ipc_value(SEXP id_sexp)
 SEXP ipc_reset(SEXP id_sexp, SEXP n_sexp)
 {
     IpcCounter cnt = IpcCounter(ipc_id(id_sexp));
-    int n = ipccounter_n(n_sexp);
+    int n = ipc_n(n_sexp);
     return Rf_ScalarInteger(cnt.reset(n));
 }
 
