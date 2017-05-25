@@ -1,11 +1,12 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+static boost::uuids::random_generator uuid_generator =
+    boost::uuids::random_generator();
+
 std::string uuid_generate()
 {
-    // generator could be static for (not important) performance
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    return boost::uuids::to_string(uuid);
+    return boost::uuids::to_string(uuid_generator());
 }
 
 #include <boost/interprocess/managed_shared_memory.hpp>
