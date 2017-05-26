@@ -116,7 +116,7 @@ int ipc_n(SEXP n_sexp)
     bool test = IS_SCALAR(n_sexp, INTSXP) && (R_NaInt != Rf_asInteger(n_sexp));
     if (!test)
         Rf_error("'n' cannot be coerced to integer(1) and not NA");
-    int n = Rf_asInteger(n_sexp);
+    int n = INTEGER(n_sexp)[0];
     UNPROTECT(1);
     return n;
 }
@@ -134,7 +134,7 @@ SEXP ipc_remove(SEXP id_sexp) {
 SEXP ipc_uuid()
 {
     std::string uuid = uuid_generate();
-    return Rf_ScalarString(mkChar(uuid.c_str()));
+    return Rf_mkString(uuid.c_str());
 }
 
 // mutex
