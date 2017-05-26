@@ -10,7 +10,7 @@ yield(id)
 yield(id)
 ipcremove(id)                        # all processes done with counter
 
-id <- ipcid()                           # for use in parallel code
+id <- ipcid()
 
 fun <- function(i, id)
     IPCMutex::yield(id)
