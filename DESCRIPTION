@@ -1,5 +1,4 @@
-Comment: [![Build Status](https://travis-ci.org/mtmorgan/IPCMutex.svg?branch=master)](https://travis-ci.org/mtmorgan/IPCMutex)
-Comment: <pre>
+Comment: [![Build Status](https://travis-ci.org/mtmorgan/IPCMutex.svg?branch=master)](https://travis-ci.org/mtmorgan/IPCMutex)<pre>
 Package: IPCMutex
 Title: A mutex implementation using the Boost.Interprocess library
 Version: 0.0.6
